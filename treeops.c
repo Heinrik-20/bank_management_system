@@ -4,11 +4,11 @@
 #include "account.h"
 #include "treeops.h"
 
-void print_all_items(node_t *node, void print(void *)){
+void traverse_tree(node_t *node, void action(void *)){
     if (node) {
-        print_all_items(node->left, print);
-        print_all_items(node->right, print);
-        print(node->data);
+        traverse_tree(node->left, action);
+        traverse_tree(node->right, action);
+        action(node);
     }
     return;
 }
@@ -38,15 +38,18 @@ int is_empty_tree(tree_t *tree){
     return 0;
 }
 
-int search_tree(tree_t *tree, void *key){
+node_t *search_tree(tree_t *tree, void *key){
     assert(tree);
     return recursive_search(tree->root, key, tree->cmp);
 }
 
-int recursive_search(node_t *root, void *key, int cmp(void*, void*)){
+node_t *recursive_search(node_t *root, void *key, int cmp(void*, void*)){
+    if (!root){
+        return NULL;
+    }
     int diff = cmp(((node_t *)key)->data, root->data);
     if (diff == 0){
-        return 1;
+        return root;
     }
     else if (diff < 0){
         return recursive_search(root->left, key, cmp);
@@ -59,6 +62,10 @@ int recursive_search(node_t *root, void *key, int cmp(void*, void*)){
 tree_t *insert_tree(tree_t *tree, void *acc){
     assert(tree);
     node_t *new = node_init(acc);
+    if (search_tree(tree, new)){
+        printf("Account already in database\n");
+        return tree;
+    }
     tree->root = recursive_insert(tree->root, new, tree->cmp);
     return tree;
 }
@@ -75,4 +82,10 @@ node_t *recursive_insert(node_t *root, node_t *node, int cmp(void*, void*)){
         root->right = recursive_insert(root->right, node, cmp);
     }
     return root;
+}
+
+void free_tree(tree_t **tree){
+    free(*tree);
+    *tree = NULL;
+    return;
 }
